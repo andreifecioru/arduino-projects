@@ -1,12 +1,21 @@
-
 #define PLAYER_MOVE 'x'
 #define ARDUINO_MOVE 'o'
 #define IN_PIN 13
-#define LED 12
+
+#define LED_RED 12
+#define LED_GREEN 7
+#define LED_BLUE 8
+
 #define IN_PROGRESS 0
 #define WAIT_FOR_RESTART 1 
 
+#define WINNER_NONE 0
+#define WINNER_PLAYER 1
+#define WINNER_ARDUINO 2
+#define WINNER_TIE 3
+
 byte game_state;
+byte winner;
 
 char board[3][5] = {
   {'-', '-', '-', '\n', '\0'},
@@ -106,26 +115,31 @@ boolean check_for_victory() {
     
     if ((sum_line == 360) || (sum_col == 360)) {
       Serial.println("You win! Press the switch to play again.");
+      winner = WINNER_PLAYER;
       return true;
     }
       
     if ((sum_line == 333) || (sum_col == 333)) {
+      winner = WINNER_ARDUINO;      
       Serial.println("I win! Press the switch to play again.");
       return true;
     }    
   }
   
   if ((sum_diag_1 == 360) || (sum_diag_2 == 360)) {
+    winner = WINNER_PLAYER;
     Serial.println("You win! Press the switch to play again.");
     return true;
   }
       
   if ((sum_diag_1 == 333) || (sum_diag_2 == 333)) {
+    winner = WINNER_ARDUINO;      
     Serial.println("I win! Press the switch to play again.");
     return true;
   }
   
   if (!_available) {
+    winner = WINNER_TIE;      
     Serial.println("It's a tie! Press the switch to play again.");
     return true;
   }
@@ -151,39 +165,63 @@ byte arduino_move() {
   return _move;
 }
 
+void updateLedColor() {
+  switch (winner) {
+    case WINNER_NONE:
+      digitalWrite(LED_RED, LOW);
+      digitalWrite(LED_GREEN, LOW);
+      digitalWrite(LED_BLUE, LOW);    
+    break;
+    case WINNER_PLAYER:
+      digitalWrite(LED_GREEN, HIGH);
+    break;
+    case WINNER_ARDUINO:
+      digitalWrite(LED_RED, HIGH);
+    break;
+    case WINNER_TIE:
+      digitalWrite(LED_BLUE, HIGH);    
+    break;
+  }
+}
+
 void setup() {                	
   Serial.begin(9600);	
   randomSeed(analogRead(0));
   pinMode(IN_PIN, INPUT);
-  pinMode(LED, OUTPUT);    
-  	  	
+  pinMode(LED_RED, OUTPUT);    
+  pinMode(LED_BLUE, OUTPUT);    
+  pinMode(LED_GREEN, OUTPUT);    
+  
   Serial.println("Let's play a nice game of Tic-Tac-Toe!");
 
   reset_board();
   game_state = IN_PROGRESS;
+  winner = WINNER_NONE;
 }
 
 void loop() {
+  updateLedColor();
+  
   if (game_state == WAIT_FOR_RESTART) {
-      digitalWrite(LED, HIGH);
-
-      int value = digitalRead(IN_PIN);
-      delay(100);
+    int value = digitalRead(IN_PIN);
+    delay(100);
       
-      if (value == HIGH) {
-        while(Serial.available())
-          Serial.read();
+    if (value == HIGH) {
+      while(Serial.available())
+        Serial.read();
         
-        Serial.println("Great, we play again!");
-        reset_board();
-        game_state = IN_PROGRESS;
-      }
+      Serial.println("Great, we play again!");
+      reset_board();
+      game_state = IN_PROGRESS;
+      winner = WINNER_NONE;
+    }
+    
+    return;
   }
     
   if (game_state == IN_PROGRESS) {
-      digitalWrite(LED, LOW);
-
     byte player_move = read_input();
+
     if (player_move) {
       update_board(player_move, true);
       if (check_for_victory()) {
@@ -197,5 +235,7 @@ void loop() {
         return;
       }
     }
+    
+    return;
   }
 }
