@@ -5,7 +5,7 @@ Play a simple game of tic-tac-toe via Arduino's serial interface.
 
 What you need:
 * 1 Arduino Uno board
-* 4 220ohm resiztors
+* 2 or 4 220ohm resiztors (dependning on whether you have an RGB-LED or not).
 * 1 push-button
 * 3 LEDs or 1 RGB-LED
 
