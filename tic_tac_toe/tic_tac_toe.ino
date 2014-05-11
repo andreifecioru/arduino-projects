@@ -24,9 +24,14 @@ char board[3][5] = {
 };
 
 void draw_board() {
-  Serial.println("");
-  for (byte line = 0; line < 3; line ++) {
-    Serial.print(board[line]);
+  char line[9] = {'|', ' ','|', ' ','|', ' ', '|', '\n', '\0'};
+  Serial.println("+-+-+-+");
+  for (byte i = 0; i < 3; i ++) {
+    for (byte j = 0; j < 3; j ++) {
+      line[1 + j * 2] = board[i][j];
+    }
+    Serial.print(line);
+    Serial.println("+-+-+-+");
   }
   Serial.println("");
 }
